@@ -1,0 +1,6 @@
+{
+  "name": "Psyco Time X Pro",
+  "description": "Sistem Electronic Timing, Pengurusan Latihan Jurulatih, Analisis Pergerakan AI & Rutin Latihan Pelari",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

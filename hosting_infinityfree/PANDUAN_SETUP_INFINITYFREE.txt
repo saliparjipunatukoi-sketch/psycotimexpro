@@ -1,0 +1,78 @@
+================================================================================
+PANDUAN PEMASANGAN HOSTING INFINITYFREE (FTP & MYSQL)
+SISTEM PENGURUSAN LATIHAN PSYCO TIME X PRO (www.psycotimexpro.my/training-management)
+================================================================================
+
+Tahniah! Semua fail PHP, MySQL dan Web Dashboard telah siap dijana untuk domain anda.
+Sila ikuti 3 langkah mudah ini untuk memasangnya ke hosting InfinityFree anda:
+
+--------------------------------------------------------------------------------
+LANGKAH 1: IMPORT PANGKALAN DATA MYSQL DI CPANEL INFINITYFREE
+--------------------------------------------------------------------------------
+1. Log masuk ke cPanel InfinityFree anda (https://dash.infinityfree.com).
+2. Pergi ke menu "MySQL Databases" dan pastikan pangkalan data anda dicipta:
+   Contoh Nama DB: if0_41886177_registry_psyco
+3. Buka "phpMyAdmin" bagi pangkalan data tersebut.
+4. Klik tab "Import" di bahagian atas phpMyAdmin.
+5. Pilih fail "schema.sql" yang terdapat dalam folder ini dan tekan butang "Go/Import".
+6. Selesai! Semua jadual (coaches, sub_coaches, athletes, timing_runs, attendance, fee_payments, subscription_receipts) berserta akaun Master Admin Roger (Saliparjipun.atukoi@gmail.com / Abc@1234) akan dicipta secara automatik.
+
+--------------------------------------------------------------------------------
+LANGKAH 2: UBAH BUTIRAN MYSQL DALAM db_connect.php
+--------------------------------------------------------------------------------
+1. Buka fail "db_connect.php" menggunakan teks editor (Notepad dsb).
+2. Kemas kini 4 baris maklumat MySQL anda seperti yang tertera di cPanel InfinityFree:
+   $db_host = "sqlXXX.infinityfree.com"; // MySQL Hostname anda di cPanel
+   $db_user = "if0_XXXXXXXX";           // MySQL Username anda
+   $db_pass = "KATA_LALUAN_ANDA";       // Kata laluan akaun vPanel anda
+   $db_name = "if0_XXXXXXXX_registry_psyco"; // Nama DB yang anda cipta
+3. Simpan (Save) fail db_connect.php.
+
+--------------------------------------------------------------------------------
+LANGKAH 3: UPLOAD FAIL KE HOSTING MELALUI FTP ATAU FILE MANAGER
+--------------------------------------------------------------------------------
+1. Buka perisian FTP pilihan anda (seperti FileZilla atau Online File Manager di cPanel).
+2. Masukkan butiran sambungan FTP InfinityFree:
+   - Host: ftpupload.net
+   - Username: (Username akaun InfinityFree anda)
+   - Password: (Kata laluan akaun anda)
+   - Port: 21
+3. Masuk ke direktori: /htdocs/
+4. Cipta satu folder baru bernama: training-management
+5. Upload SEMUA fail berikut ke dalam folder /htdocs/training-management/ :
+   - admin.php          (Papan Pemuka Khas Master Admin Roger - Urus Langganan, Edit & Padam)
+   - ranking.php        (Carta Ranking Pelatih & Rekod PB Balapan & Padang)
+   - forgot_password.php(Borang Permintaan Reset Kata Laluan)
+   - reset_password.php (Pengesahan Kod 6-Digit & Kata Laluan Baharu)
+   - mailer.php         (Sistem Automasi Emel dari Admin Roger)
+   - download.php       (Halaman Muat Turun APK & Kod QR untuk Telefon)
+   - psycotimexpro.apk  (Fail Pemasangan Aplikasi Android ~25MB)
+   - index.php          (Papan Pemuka Latihan Utama untuk Pantauan Laptop)
+   - login.php          (Halaman Log Masuk Berasingan Google Email & Sub-Coach)
+   - google_login.php   (Pemproses Log Masuk Google 1-Click Tanpa Perlu Password)
+   - register_coach.php (Pendaftaran Coach Baru - 7 Hari Percuma Serta Merta)
+   - register_runner.php(Borang Pendaftaran Pelatih melalui QR Code Ibu Bapa/Atlet)
+   - api.php            (REST API Penyegerakan dengan Aplikasi Telefon)
+   - db_connect.php     (Sambungan Database)
+   - schema.sql         (Skrip MySQL Backup)
+
+--------------------------------------------------------------------------------
+LANGKAH 4: UJI DAN AKSES DI PELAYAR WEB LAPTOP
+--------------------------------------------------------------------------------
+1. Buka pelayar web (Chrome / Edge / Firefox) di Laptop anda dan layari:
+   https://www.psycotimexpro.my/training-management
+
+2. Anda akan melihat halaman Log Masuk Pengurusan Latihan:
+   - Master Admin Login (Roger):
+     Username: Saliparjipun.atukoi@gmail.com
+     Password: Abc@1234
+   - Atau daftar akaun Jurulatih baru (Percuma 7 hari).
+
+3. Pendaftaran Pelatih Baharu (New Member):
+   - Tekan butang "New Member (QR Code)" di Dashboard untuk memaparkan QR Code.
+   - Ibu bapa atau atlet mengimbas kod tersebut untuk mengisi butiran penuh (Nama, No IC, Tarikh Lahir, Umur, Tinggi, Berat, Jantina, Sukan Balapan atau Padang, dsb).
+
+4. Hubungi Admin:
+   - Sebarang pertanyaan atau kelulusan terus hubungi Admin Roger melalui WhatsApp:
+     +60195326399
+================================================================================
