@@ -3,8 +3,23 @@ PANDUAN PEMASANGAN HOSTING INFINITYFREE (FTP & MYSQL)
 SISTEM PENGURUSAN LATIHAN PSYCO TIME X PRO (www.psycotimexpro.my/training-management)
 ================================================================================
 
-Tahniah! Semua fail PHP, MySQL dan Web Dashboard telah siap dijana untuk domain anda.
-Sila ikuti 3 langkah mudah ini untuk memasangnya ke hosting InfinityFree anda:
+Tahniah! Semua fail PHP, MySQL dan Web Dashboard telah siap dikemaskini mengikut tema Merah, Hitam & Silver yang elegan dan profesional.
+
+CIRI-CIRI BAHARU DITAMBAH:
+1. Senarai Jurulatih Langganan Aktif (List of Active Subscribers):
+   - Dipaparkan secara telus di portal untuk rujukan umum & atlit.
+2. Ruangan Testimonial Jurulatih:
+   - Pelawat & jurulatih boleh membaca ulasan serta menghantar testimonial baharu.
+3. Ruangan Iklan & Promosi Langganan (RM30/Bulan):
+   - Direka khas untuk menarik minat jurulatih lain melanggan perkhidmatan training management.
+4. Peti Masuk (Inbox) Jurulatih:
+   - Menyimpan laporan auto bulanan 1hb (pendaftaran & yuran atlit) serta memo rasmi daripada Admin Roger.
+5. Profil Coach Profesional:
+   - Ruangan khas untuk mengemas kini pencapaian, lesen (Sains Sukan Tahap 1/2, World Athletics 1), gambar profil dan logo kelab.
+6. Muat Turun / Cetak PDF Atlit:
+   - Pilihan cetak seorang demi seorang atau secara pukal (pilih & tick kotak semakan).
+7. Aliran Log Masuk Pintar:
+   - Sekiranya pengguna telah log masuk, sistem akan terus membuka dashboard pengguna tanpa perlu log masuk semula.
 
 --------------------------------------------------------------------------------
 LANGKAH 1: IMPORT PANGKALAN DATA MYSQL DI CPANEL INFINITYFREE
@@ -15,7 +30,7 @@ LANGKAH 1: IMPORT PANGKALAN DATA MYSQL DI CPANEL INFINITYFREE
 3. Buka "phpMyAdmin" bagi pangkalan data tersebut.
 4. Klik tab "Import" di bahagian atas phpMyAdmin.
 5. Pilih fail "schema.sql" yang terdapat dalam folder ini dan tekan butang "Go/Import".
-6. Selesai! Semua jadual (coaches, sub_coaches, athletes, timing_runs, attendance, fee_payments, subscription_receipts) berserta akaun Master Admin Roger (Saliparjipun.atukoi@gmail.com / Abc@1234) akan dicipta secara automatik.
+6. Selesai! Semua jadual (coaches, sub_coaches, athletes, timing_runs, attendance, fee_payments, subscription_receipts, inbox_messages, testimonials) berserta akaun Master Admin Roger (Saliparjipun.atukoi@gmail.com / Abc@1234) akan dicipta secara automatik.
 
 --------------------------------------------------------------------------------
 LANGKAH 2: UBAH BUTIRAN MYSQL DALAM db_connect.php
@@ -47,13 +62,13 @@ LANGKAH 3: UPLOAD FAIL KE HOSTING MELALUI FTP ATAU FILE MANAGER
    - mailer.php         (Sistem Automasi Emel dari Admin Roger)
    - download.php       (Halaman Muat Turun APK & Kod QR untuk Telefon)
    - psycotimexpro.apk  (Fail Pemasangan Aplikasi Android ~25MB)
-   - index.php          (Papan Pemuka Latihan Utama untuk Pantauan Laptop)
+   - index.php          (Papan Pemuka Latihan Utama, Peti Masuk, Profil Coach, Subscribers & Testimonials)
    - login.php          (Halaman Log Masuk Berasingan Google Email & Sub-Coach)
    - google_login.php   (Pemproses Log Masuk Google 1-Click Tanpa Perlu Password)
    - register_coach.php (Pendaftaran Coach Baru - 7 Hari Percuma Serta Merta)
    - register_runner.php(Borang Pendaftaran Pelatih melalui QR Code Ibu Bapa/Atlet)
    - api.php            (REST API Penyegerakan dengan Aplikasi Telefon)
-   - db_connect.php     (Sambungan Database)
+   - db_connect.php     (Sambungan Database Auto Fallback)
    - schema.sql         (Skrip MySQL Backup)
 
 --------------------------------------------------------------------------------

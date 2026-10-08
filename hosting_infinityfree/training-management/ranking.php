@@ -1,6 +1,6 @@
 <?php
 // hosting_infinityfree/training-management/ranking.php
-// Carta Ranking & Prestasi Pelatih (Balapan & Padang)
+// Carta Ranking & Prestasi Atlit (Balapan & Padang)
 session_start();
 require_once __DIR__ . '/db_connect.php';
 
@@ -40,7 +40,7 @@ $athletes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carta Ranking Pelatih - Psyco Time X Pro</title>
+    <title>Carta Ranking Atlit - Psyco Time X Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -113,7 +113,7 @@ $athletes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="logo-badge">P<span>X</span>P</div>
             <div class="brand-text">
                 <h1>PSYCO TIME X PRO</h1>
-                <p>Carta Ranking & Rekod Prestasi Pelatih (Balapan & Padang)</p>
+                <p>Carta Ranking & Rekod Prestasi Atlit (Balapan & Padang)</p>
             </div>
         </div>
         <div class="nav-btns">
@@ -147,7 +147,7 @@ $athletes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <thead>
                     <tr>
                         <th style="width: 60px; text-align: center;">Kedudukan</th>
-                        <th>Pelatih / Atlet</th>
+                        <th>Atlit</th>
                         <th>Kelab / Akademi</th>
                         <th>Jurulatih</th>
                         <th>Jenis & Acara</th>
@@ -160,7 +160,7 @@ $athletes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php if (empty($athletes)): ?>
                         <tr>
                             <td colspan="8" style="text-align: center; padding: 40px; color: var(--silver);">
-                                Tiada rekod pelatih untuk tapisan ini.
+                                Tiada rekod atlit untuk tapisan ini.
                             </td>
                         </tr>
                     <?php else: ?>
@@ -201,8 +201,17 @@ $athletes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <div class="rank-badge <?= $rank_cls ?>"><?= $medal ?></div>
                                 </td>
                                 <td>
-                                    <strong style="color:#FFF;"><?= htmlspecialchars($at['name']) ?></strong><br>
-                                    <span style="color:var(--silver);font-size:10px;"><?= htmlspecialchars($at['gender']) ?>, <?= $at['age'] ?> Tahun</span>
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <?php if (!empty($at['photo_uri'])): ?>
+                                            <img src="<?= htmlspecialchars($at['photo_uri']) ?>" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid var(--gold);">
+                                        <?php else: ?>
+                                            <div style="width:36px;height:36px;border-radius:50%;background:var(--surface-variant);display:flex;align-items:center;justify-content:center;color:var(--silver);font-weight:bold;font-size:12px;">👤</div>
+                                        <?php endif; ?>
+                                        <div>
+                                            <strong style="color:#FFF;"><?= htmlspecialchars($at['name']) ?></strong><br>
+                                            <span style="color:var(--silver);font-size:10px;"><?= htmlspecialchars($at['gender']) ?>, <?= $at['age'] ?> Tahun</span>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
                                     <strong><?= htmlspecialchars(!empty($at['club_name']) ? $at['club_name'] : 'Akademi Sukan') ?></strong>

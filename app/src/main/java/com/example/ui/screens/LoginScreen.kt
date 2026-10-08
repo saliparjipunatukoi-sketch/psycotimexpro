@@ -264,22 +264,6 @@ fun LoginScreen(
                     ) {
                         Text("Lupa Kata Laluan? (Reset Password)", color = SilverMetallic, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
-
-                    // Quick Master Admin Login Button
-                    OutlinedButton(
-                        onClick = {
-                            username = "Saliparjipun.atukoi@gmail.com"
-                            password = "Abc@1234"
-                            viewModel.loginCoach(username, password)
-                        },
-                        border = androidx.compose.foundation.BorderStroke(1.dp, SilverMetallic),
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(Icons.Default.AdminPanelSettings, contentDescription = null, tint = SilverMetallic, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Log Masuk Master Admin (Roger)", color = SilverMetallic, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
                 } else {
                     // Complete 1st Time Coach & Club Registration Form
                     Text(
@@ -567,54 +551,7 @@ fun LoginScreen(
                             color = TextSecondary
                         )
 
-                        Text("Pilih Akaun Pantas:", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = GoldAccent)
-
-                        // Quick Accounts
-                        Surface(
-                            color = SurfaceDarkVariant,
-                            shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.loginWithGoogle("Saliparjipun.atukoi@gmail.com", "Roger (Master Admin)", "Kelab Olahraga Psyco Time X Pro")
-                                    showGoogleSignInDialog = false
-                                }
-                        ) {
-                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AccountCircle, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(28.dp))
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text("Roger (Master Admin)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    Text("Saliparjipun.atukoi@gmail.com", color = SilverMetallic, fontSize = 10.sp)
-                                }
-                            }
-                        }
-
-                        Surface(
-                            color = SurfaceDarkVariant,
-                            shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.loginWithGoogle("coach.danial@gmail.com", "Danial Iskandar", "Akademi Pecut Elit")
-                                    showGoogleSignInDialog = false
-                                }
-                        ) {
-                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AccountCircle, contentDescription = null, tint = SprintGreen, modifier = Modifier.size(28.dp))
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text("Coach Danial (Sprint Specialist)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                    Text("coach.danial@gmail.com", color = SilverMetallic, fontSize = 10.sp)
-                                }
-                            }
-                        }
-
-                        HorizontalDivider(color = BorderDark, modifier = Modifier.padding(vertical = 4.dp))
-
-                        Text("Atau masukkan Emel Google anda:", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = SilverMetallic)
+                        Text("Masukkan Emel Google anda:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = SilverMetallic)
 
                         OutlinedTextField(
                             value = googleEmailInput,
@@ -629,7 +566,7 @@ fun LoginScreen(
                         OutlinedTextField(
                             value = googleNameInput,
                             onValueChange = { googleNameInput = it },
-                            label = { Text("Nama Jurulatih / Nick Name (Jika Baru)") },
+                            label = { Text("Nama Jurulatih / Nick Name (Jika Pengguna Baharu)") },
                             placeholder = { Text("cth: Coach Sam") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
@@ -639,7 +576,7 @@ fun LoginScreen(
                         OutlinedTextField(
                             value = googleClubInput,
                             onValueChange = { googleClubInput = it },
-                            label = { Text("Nama Kelab (Jika Baru)") },
+                            label = { Text("Nama Kelab Sukan (Jika Pengguna Baharu)") },
                             placeholder = { Text("cth: Kelab Olahraga Sabah") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),

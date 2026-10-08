@@ -6,11 +6,15 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,13 +23,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.ui.components.PsycotimexproLogoBadge
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.MainViewModel
@@ -54,9 +61,18 @@ fun QrRunnerOnboardDialog(
     var sportType by remember { mutableStateOf("Balapan") } // Balapan, Padang
     var category by remember { mutableStateOf("100m Pecut") }
     var pb by remember { mutableStateOf("") }
+    var photoUri by remember { mutableStateOf("") }
     var monthlyFee by remember { mutableStateOf("60.00") }
     var feeDueDate by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            photoUri = uri.toString()
+        }
+    }
 
     val trackEvents = listOf(
         "100m Pecut", "200m Pecut", "400m Pecut",
@@ -85,7 +101,7 @@ fun QrRunnerOnboardDialog(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PsycotimexproLogoBadge(size = 32.dp)
                     Column {
-                        Text("DAFTAR PELATIH BARU", color = RacingRed, fontSize = 14.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+                        Text("DAFTAR ATLIT BARU", color = RacingRed, fontSize = 14.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
                         Text("Jurulatih: $coachName", color = TextSecondary, fontSize = 11.sp)
                     }
                 }
@@ -156,7 +172,7 @@ fun QrRunnerOnboardDialog(
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.QrCode2,
-                                    contentDescription = "QR Code Pelatih",
+                                    contentDescription = "QR Code Atlit",
                                     tint = Color.Black,
                                     modifier = Modifier.size(150.dp)
                                 )
@@ -220,13 +236,77 @@ fun QrRunnerOnboardDialog(
                 } else {
                     // Manual Registration Form
                     Column(
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(rememberScrollState()),
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // 1. Mandatory Photo Section
+                        Surface(
+                            color = Color.Black,
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (photoUri.isNotBlank()) SprintGreen else RacingRed),
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                photoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                if (photoUri.isNotBlank()) {
+                                    AsyncImage(
+                                        model = photoUri,
+                                        contentDescription = "Gambar Atlit",
+                                        modifier = Modifier
+                                            .size(54.dp)
+                                            .clip(CircleShape)
+                                            .border(1.5.dp, SprintGreen, CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Surface(
+                                        color = RacingRed.copy(alpha = 0.2f),
+                                        shape = CircleShape,
+                                        modifier = Modifier.size(54.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(Icons.Default.AddAPhoto, contentDescription = null, tint = RacingRed, modifier = Modifier.size(24.dp))
+                                        }
+                                    }
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("GAMBAR ATLIT * (MANDATORI)", color = if (photoUri.isNotBlank()) SprintGreen else RacingRed, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+                                    }
+                                    Text(
+                                        text = if (photoUri.isNotBlank()) "✓ Gambar atlit berjaya dimuat naik (Sedia disimpan)" else "Tekan sini untuk pilih gambar profil/badan penuh atlit",
+                                        color = if (photoUri.isNotBlank()) TextPrimary else TextSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                }
+
+                                Button(
+                                    onClick = {
+                                        photoPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (photoUri.isNotBlank()) SprintGreen else RacingRed),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(if (photoUri.isNotBlank()) "Tukar" else "Pilih", color = if (photoUri.isNotBlank()) Color.Black else Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
                         OutlinedTextField(
                             value = name,
                             onValueChange = { name = it },
-                            label = { Text("Nama Penuh Pelatih *", fontSize = 11.sp) },
+                            label = { Text("Nama Penuh Atlit *", fontSize = 11.sp) },
                             placeholder = { Text("cth: Muhammad Danial") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
@@ -401,38 +481,45 @@ fun QrRunnerOnboardDialog(
 
                         Button(
                             onClick = {
-                                if (name.isNotBlank()) {
-                                    val calculatedAge = age.toIntOrNull() ?: 16
-                                    val calculatedPb = pb.toDoubleOrNull() ?: 10.50
-                                    val height = heightCm.toDoubleOrNull() ?: 0.0
-                                    val weight = weightKg.toDoubleOrNull() ?: 0.0
-                                    val fee = monthlyFee.toDoubleOrNull() ?: 60.0
-
-                                    viewModel.registerAthlete(
-                                        name = name,
-                                        age = calculatedAge,
-                                        dob = dob,
-                                        phone = phone,
-                                        icNumber = icNumber,
-                                        heightCm = height,
-                                        weightKg = weight,
-                                        gender = gender,
-                                        sportType = sportType,
-                                        category = category,
-                                        pb = calculatedPb,
-                                        monthlyFee = fee,
-                                        feeDueDate = feeDueDate,
-                                        notes = notes
-                                    )
-                                    Toast.makeText(context, "Pelatih berjaya didaftarkan!", Toast.LENGTH_SHORT).show()
-                                    onDismiss()
+                                if (name.isBlank()) {
+                                    Toast.makeText(context, "Sila masukkan Nama Penuh Atlit!", Toast.LENGTH_SHORT).show()
+                                    return@Button
                                 }
+                                if (photoUri.isBlank()) {
+                                    Toast.makeText(context, "Gambar Atlit adalah MANDATORI! Sila tekan butang pilih gambar.", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                val calculatedAge = age.toIntOrNull() ?: 16
+                                val calculatedPb = pb.toDoubleOrNull() ?: 10.50
+                                val height = heightCm.toDoubleOrNull() ?: 0.0
+                                val weight = weightKg.toDoubleOrNull() ?: 0.0
+                                val fee = monthlyFee.toDoubleOrNull() ?: 60.0
+
+                                viewModel.registerAthlete(
+                                    name = name,
+                                    age = calculatedAge,
+                                    dob = dob,
+                                    phone = phone,
+                                    icNumber = icNumber,
+                                    heightCm = height,
+                                    weightKg = weight,
+                                    gender = gender,
+                                    sportType = sportType,
+                                    category = category,
+                                    pb = calculatedPb,
+                                    photoUri = photoUri,
+                                    monthlyFee = fee,
+                                    feeDueDate = feeDueDate,
+                                    notes = notes
+                                )
+                                Toast.makeText(context, "Atlit berjaya didaftarkan!", Toast.LENGTH_SHORT).show()
+                                onDismiss()
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = RacingRed),
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Simpan Pelatih ke Sistem", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("Simpan Atlit ke Sistem", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }

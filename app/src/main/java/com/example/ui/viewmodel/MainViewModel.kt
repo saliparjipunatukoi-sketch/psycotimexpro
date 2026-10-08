@@ -34,15 +34,16 @@ import java.util.*
 enum class AppTab(val title: String, val subtitle: String) {
     DASHBOARD("Papan Pemuka", "Pusat Pengurusan Latihan"),
     TIMING_CAM("Kamera ET", "Electronic Timing & Photo Finish"),
-    RANKING("Ranking", "Prestasi PB Balapan & Padang"),
-    ATHLETES("Pelatih", "Pengurusan Balapan & Padang"),
+    RANKING("Ranking Atlit", "Prestasi PB Balapan & Padang"),
+    ATHLETES("Atlit", "Pengurusan Atlit & Acara"),
     SUB_COACHES("Sub-Coach", "Penolong Jurulatih"),
     SUBSCRIPTION("Langganan", "Status & Resit Rasmi"),
-    ATTENDANCE("Kehadiran", "Rekod Sesi Latihan"),
-    FEES("Yuran Pelatih", "Status & Peringatan Yuran"),
-    AI_ANALYSIS("AI Analisis", "Biomekanik & Gerak Pelari"),
+    ATTENDANCE("Kehadiran Atlit", "Rekod Sesi Latihan"),
+    FEES("Yuran Atlit", "Status & Peringatan Yuran"),
+    AI_ANALYSIS("AI Analisis", "Biomekanik & Gerak Atlit"),
     AI_ROUTINE("AI Rutin", "Cadangan Latihan & Drills"),
-    WEB_PORTAL("Web Portal", "psycotimexpro.my/training-management")
+    WEB_PORTAL("Web Portal", "psycotimexpro.my/training-management"),
+    COACH_PROFILE("Profil Coach", "Profil Jurulatih & Inbox")
 }
 
 enum class TimingState {
@@ -61,7 +62,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PsycoRepository(db)
     private val aiService = AiRunnerService()
 
-    private val toneGen = try { ToneGenerator(AudioManager.STREAM_MUSIC, 100) } catch (e: Exception) { null }
     private val vibrator = application.getSystemService(Application.VIBRATOR_SERVICE) as? Vibrator
 
     // --- Tab Navigation: Starts with Dashboard as requested by user ---
@@ -86,15 +86,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val approvalNotice: StateFlow<String?> = _approvalNotice.asStateFlow()
 
     init {
-        // Automatically sign in as master admin or primary coach
+        // App bermula dengan _currentCoach bernilai null agar 1st time buka terus ke skrin Login!
+        _currentCoach.value = null
         viewModelScope.launch {
-            val admin = repository.getCoachByEmail("Saliparjipun.atukoi@gmail.com")
-            if (admin != null) {
-                _currentCoach.value = admin
-            } else {
-                val list = repository.getAllCoaches().firstOrNull()
-                _currentCoach.value = list?.firstOrNull()
+            _currentCoach.collect { coach ->
+                if (coach != null) {
+                    checkAndGenerateMonthlyReport(coach)
+                }
             }
+        }
+    }
+
+    fun isCoachSubscriptionExpired(coach: CoachAccountEntity?): Boolean {
+        if (coach == null) return false
+        // Master Admin Roger tidak pernah luput
+        if (coach.role == "ADMIN" || coach.email.equals("Saliparjipun.atukoi@gmail.com", ignoreCase = true)) {
+            return false
+        }
+        return System.currentTimeMillis() > coach.subscriptionExpiresAt
+    }
+
+    fun updateClubLogo(logoUri: String) {
+        val coach = _currentCoach.value ?: return
+        viewModelScope.launch {
+            val updated = coach.copy(clubLogoUri = logoUri)
+            repository.updateCoach(updated)
+            _currentCoach.value = updated
         }
     }
 
@@ -332,6 +349,126 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (coach != null) repository.getSubscriptionPayments(coach.id) else flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // --- Inbox & Laporan Bulanan Automatik (Every 1st of Month) ---
+    val inboxMessages: StateFlow<List<InboxMessageEntity>> = _currentCoach.flatMapLatest { coach ->
+        if (coach != null) repository.getInboxMessages(coach.id) else flowOf(emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val unreadInboxCount: StateFlow<Int> = _currentCoach.flatMapLatest { coach ->
+        if (coach != null) repository.getUnreadInboxCount(coach.id) else flowOf(0)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    fun markInboxMessageAsRead(id: Long) {
+        viewModelScope.launch { repository.markInboxMessageAsRead(id) }
+    }
+
+    fun deleteInboxMessage(id: Long) {
+        viewModelScope.launch { repository.deleteInboxMessage(id) }
+    }
+
+    fun checkAndGenerateMonthlyReport(coach: CoachAccountEntity) {
+        viewModelScope.launch {
+            val cal = Calendar.getInstance()
+            val monthYearStr = SimpleDateFormat("MMMM yyyy", Locale("ms", "MY")).format(cal.time)
+            val monthKey = "Laporan Bulanan: $monthYearStr"
+            val existing = repository.findInboxMessageByTitlePrefix(coach.id, monthKey)
+            if (existing == null) {
+                // Auto generate report on 1st of month
+                val athletes = repository.getAthletesByCoach(coach.id).firstOrNull() ?: emptyList()
+                val runs = repository.getAllRuns().firstOrNull() ?: emptyList()
+                val balapanCount = athletes.count { it.sportType == "Balapan" }
+                val padangCount = athletes.count { it.sportType == "Padang" }
+                val totalFeePotential = athletes.sumOf { it.monthlyFee }
+
+                val reportBody = buildString {
+                    append("LAPORAN BULANAN RASMI PENGURUSAN LATIHAN ($monthYearStr)\n\n")
+                    append("• Jurulatih: ${coach.name} (${coach.clubName.ifEmpty { "Kelab Sukan" }})\n")
+                    append("• Tarikh Dijana: 01/${SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(cal.time)}\n\n")
+                    append("1. RINGKASAN PENDAFTARAN ATLIT:\n")
+                    append("   - Jumlah Atlit Berdaftar: ${athletes.size} orang\n")
+                    append("   - Acara Balapan (Track): $balapanCount atlit\n")
+                    append("   - Acara Padang (Field): $padangCount atlit\n\n")
+                    append("2. RINGKASAN YURAN BULANAN:\n")
+                    append("   - Anggaran Kutipan Yuran Bulanan: RM ${String.format(Locale.US, "%.2f", totalFeePotential)}\n")
+                    append("   - Status: Sedia untuk kutipan & cetakan resit rasmi\n\n")
+                    append("3. REKOD CATATAN MASA ET:\n")
+                    append("   - Jumlah Sesi Larian Diambil: ${runs.size} catatan\n\n")
+                    append("Dokumen ini dijana secara automatik oleh Sistem Psyco Time X Pro untuk simpanan dan rekod pentadbiran anda.")
+                }
+
+                repository.insertInboxMessage(
+                    InboxMessageEntity(
+                        coachId = coach.id,
+                        senderName = "Sistem Pengurusan Psyco Time X Pro",
+                        title = monthKey,
+                        content = reportBody,
+                        dateString = "01/${SimpleDateFormat("MM/yyyy", Locale.getDefault()).format(cal.time)}",
+                        messageType = "MONTHLY_REPORT",
+                        attachedDocumentTitle = "Penyata Bulanan $monthYearStr.pdf"
+                    )
+                )
+            }
+
+            // Remind coach to update profile if not yet complete
+            if (!coach.hasUpdatedProfileDetails && (coach.achievements.isBlank() || coach.licenses.isBlank() || coach.profilePhotoUri.isBlank())) {
+                val reminderKey = "Peringatan Pentadbir: Kemaskini Profil Jurulatih"
+                val existingReminder = repository.findInboxMessageByTitlePrefix(coach.id, reminderKey)
+                if (existingReminder == null) {
+                    repository.insertInboxMessage(
+                        InboxMessageEntity(
+                            coachId = coach.id,
+                            senderName = "Master Admin Roger",
+                            title = reminderKey,
+                            content = "Salam Coach ${coach.name},\n\nSistem mengesan profil kejurulatihan anda belum lengkap. Sila buka tab 'Profil Coach' dan lengkapkan:\n1. Gambar Profil Jurulatih\n2. Pencapaian Kejurulatihan (cth: MSSM / Sukma / Terbuka)\n3. Lesen & Pensijilan (cth: Sains Sukan ISN Tahap 1/2, World Athletics Level 1)\n4. Logo Kelab Rasmi (100x100)\n\nMaklumat ini penting untuk memaparkan kredibiliti akademi anda kepada umum di direktori laman web rasmi.",
+                            dateString = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date()),
+                            messageType = "SYSTEM_REMINDER"
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    fun updateCoachProfile(
+        profilePhotoUri: String,
+        clubLogoUri: String,
+        achievements: String,
+        licenses: String,
+        nickname: String,
+        clubName: String,
+        clubAddress: String,
+        trainingSpecialty: String,
+        bio: String
+    ) {
+        val coach = _currentCoach.value ?: return
+        viewModelScope.launch {
+            val updated = coach.copy(
+                profilePhotoUri = profilePhotoUri,
+                clubLogoUri = clubLogoUri,
+                achievements = achievements,
+                licenses = licenses,
+                nickname = nickname,
+                clubName = clubName,
+                clubAddress = clubAddress,
+                trainingSpecialty = trainingSpecialty,
+                bio = bio,
+                hasUpdatedProfileDetails = true
+            )
+            repository.updateCoach(updated)
+            _currentCoach.value = updated
+        }
+    }
+
+    fun exportAthletesToPdf(context: android.content.Context, athletes: List<AthleteEntity>) {
+        val coach = _currentCoach.value
+        val pdfFile = com.example.util.PdfReportGenerator.generateAthletesPdf(context, athletes, coach)
+        com.example.util.PdfReportGenerator.shareOrViewPdf(
+            context,
+            pdfFile,
+            if (athletes.size == 1) "Dossier Atlit: ${athletes.first().name}" else "Dossier Pukal (${athletes.size} Atlit)"
+        )
+    }
+
     // --- Electronic Timing System State ---
     private val _sessionId = MutableStateFlow("et_" + SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(Date()))
     val sessionId: StateFlow<String> = _sessionId.asStateFlow()
@@ -445,8 +582,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _timingState.value = TimingState.RUNNING
                 startEpoch = System.currentTimeMillis()
 
+                // Bunyi Tembakan Pistol Pelepas (Athletic Starter Pistol Gunshot)
+                playStarterPistolSound()
+
                 try {
-                    toneGen?.startTone(ToneGenerator.TONE_PROP_BEEP, 300)
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                         vibrator?.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
                     } else {
@@ -469,12 +608,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val finalMillis = System.currentTimeMillis() - startEpoch
                 _elapsedMillis.value = finalMillis
 
-                try {
-                    toneGen?.startTone(ToneGenerator.TONE_CDMA_HIGH_L, 200)
-                } catch (e: Exception) {}
-
                 val formatted = formatMillisToStopwatch(finalMillis)
                 val dateStr = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                val timeStr = SimpleDateFormat("hh:mma", Locale.getDefault()).format(Date())
+                val raceTitle = "Race ${_currentRunIndex.value} ($timeStr)"
+
                 val lanesJson = JSONArray().apply {
                     _laneConfigs.value.forEach { l ->
                         put(JSONObject().apply {
@@ -485,15 +623,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }.toString()
 
                 viewModelScope.launch {
+                    val sId = _sessionId.value
+                    val rIndex = _currentRunIndex.value
                     repository.insertRun(
                         TimingRunEntity(
-                            sessionId = _sessionId.value,
-                            runNumber = _currentRunIndex.value,
+                            sessionId = sId,
+                            runNumber = rIndex,
+                            raceTitle = raceTitle,
                             formattedTime = formatted,
                             durationMillis = finalMillis,
                             dateString = dateStr,
                             athletesJson = lanesJson,
-                            camType = _selectedCamMode.value
+                            camType = _selectedCamMode.value,
+                            videoUri = "system_video_${sId}_run${rIndex}.mp4",
+                            snapshotUri = "system_frame_${sId}_run${rIndex}.jpg",
+                            torsoDetected = true,
+                            finishPhotoUri = "torso_gate_${sId}_run${rIndex}.jpg"
                         )
                     )
                 }
@@ -502,6 +647,59 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _currentRunIndex.value += 1
                 _timingState.value = TimingState.READY
                 _elapsedMillis.value = 0L
+            }
+        }
+    }
+
+    fun resetTimer() {
+        timerJob?.cancel()
+        _timingState.value = TimingState.READY
+        _elapsedMillis.value = 0L
+    }
+
+    fun playStarterPistolSound() {
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val sampleRate = 44100
+                val durationMs = 380
+                val numSamples = (sampleRate * (durationMs / 1000.0)).toInt()
+                val samples = ShortArray(numSamples)
+                val random = java.util.Random()
+                
+                // Gunshot synthesis: Authentic Track & Field Starter Pistol (BANG - Tanpa Beep)
+                // 1. Initial explosive muzzle crack (0-15ms)
+                // 2. High-pressure shockwave dropping from 180Hz to 55Hz (15-70ms)
+                // 3. Stadium atmospheric reverberation tail (70-380ms)
+                for (i in 0 until numSamples) {
+                    val t = i.toDouble() / sampleRate
+                    val attack = if (t < 0.002) (t / 0.002) else 1.0 // 2ms sharp explosive attack
+                    val fastDecay = Math.exp(-t * 22.0)
+                    val slowDecay = Math.exp(-t * 7.5)
+                    
+                    val noise = (random.nextDouble() * 2.0 - 1.0)
+                    val crack = noise * Math.exp(-t * 40.0) * 1.0
+                    val freq = 55.0 + 135.0 * Math.exp(-t * 28.0)
+                    val lowBoom = Math.sin(2.0 * Math.PI * freq * t) * 0.75 * fastDecay
+                    val stadiumReverb = (random.nextDouble() * 2.0 - 1.0) * 0.28 * slowDecay
+                    
+                    val sampleVal = ((crack * 0.55 + lowBoom * 0.35 + stadiumReverb * 0.25) * attack * Short.MAX_VALUE).toInt()
+                    samples[i] = sampleVal.coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
+                }
+
+                val audioTrack = android.media.AudioTrack(
+                    android.media.AudioManager.STREAM_MUSIC,
+                    sampleRate,
+                    android.media.AudioFormat.CHANNEL_OUT_MONO,
+                    android.media.AudioFormat.ENCODING_PCM_16BIT,
+                    samples.size * 2,
+                    android.media.AudioTrack.MODE_STATIC
+                )
+                audioTrack.write(samples, 0, samples.size)
+                audioTrack.play()
+                delay(durationMs.toLong() + 50)
+                audioTrack.release()
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Starter pistol sound error: ${e.message}")
             }
         }
     }
@@ -532,6 +730,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sportType: String = "Balapan",
         category: String = "100m Pecut",
         pb: Double = 10.50,
+        photoUri: String = "",
         monthlyFee: Double = 60.0,
         feeDueDate: String = "",
         notes: String = ""
@@ -552,6 +751,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     sportType = sportType,
                     category = category.trim().ifEmpty { "100m Pecut" },
                     pbSeconds = if (pb > 0) pb else 10.50,
+                    photoUri = photoUri,
                     monthlyFee = monthlyFee,
                     feeDueDate = feeDueDate.ifEmpty {
                         val cal = Calendar.getInstance().apply { add(Calendar.MONTH, 1) }
@@ -561,7 +761,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             )
             val currentLanes = _laneConfigs.value
-            if (currentLanes.any { it.athleteName.startsWith("Pelari") }) {
+            if (currentLanes.any { it.athleteName.startsWith("Pelari") || it.athleteName.startsWith("Atlit") }) {
                 setLaneCount(currentLanes.size)
             }
         }

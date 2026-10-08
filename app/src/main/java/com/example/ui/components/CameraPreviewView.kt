@@ -118,25 +118,10 @@ fun AthleticTrackBackground(modifier: Modifier = Modifier) {
 
             // Central finish line
             drawLine(
-                color = androidx.compose.ui.graphics.Color(0x66FF1E27),
+                color = androidx.compose.ui.graphics.Color(0x44FF1E27),
                 start = androidx.compose.ui.geometry.Offset(w / 2, 0f),
                 end = androidx.compose.ui.geometry.Offset(w / 2, h),
-                strokeWidth = 3f
-            )
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "PSYCO TIME X PRO",
-                color = NeonCyan.copy(alpha = 0.6f),
-                fontSize = 18.sp,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Kamera Aktif • www.psycotimexpro.my",
-                color = TextMuted,
-                fontSize = 11.sp
+                strokeWidth = 2f
             )
         }
     }

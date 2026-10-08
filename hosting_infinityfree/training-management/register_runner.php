@@ -1,6 +1,6 @@
 <?php
 // hosting_infinityfree/training-management/register_runner.php
-// Borang Pendaftaran Pelatih Baharu (Diimbas Melalui QR Code oleh Ibu Bapa / Atlet)
+// Borang Pendaftaran Atlit Baharu (Diimbas Melalui QR Code oleh Ibu Bapa / Atlet)
 require_once __DIR__ . '/db_connect.php';
 
 $coach_id = isset($_GET['coach_id']) ? intval($_GET['coach_id']) : 1;
@@ -31,16 +31,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category = trim($_POST['category'] ?? '100m Pecut');
     $notes = trim($_POST['notes'] ?? '');
 
+    // Kendali Muat Naik Gambar Atlit (Mandatori)
+    $photo_path = "";
+    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = __DIR__ . '/uploads/';
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+        $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
+        $new_filename = 'atlit_' . time() . '_' . rand(1000, 9999) . '.' . $ext;
+        $target_file = $upload_dir . $new_filename;
+        if (@move_uploaded_file($_FILES['photo']['tmp_name'], $target_file)) {
+            $photo_path = 'uploads/' . $new_filename;
+        } else {
+            // Kebal kebenaran folder: Simpan sebagai Base64 Data URI jika pelayan sekat write permission
+            $raw_bytes = @file_get_contents($_FILES['photo']['tmp_name']);
+            if (!empty($raw_bytes)) {
+                $photo_path = 'data:image/' . ($ext ?: 'jpeg') . ';base64,' . base64_encode($raw_bytes);
+            }
+        }
+    }
+
     if (empty($name)) {
-        $error = "Sila masukkan Nama Penuh Pelatih.";
+        $error = "Sila masukkan Nama Penuh Atlit.";
     } elseif (empty($ic_number)) {
         $error = "Sila masukkan No. Kad Pengenalan / Surat Beranak.";
+    } elseif (empty($photo_path)) {
+        $error = "Sila muat naik Gambar Atlit (Mandatori untuk rekod pengenalan kejohanan).";
     } else {
         try {
             $insert = $pdo->prepare("INSERT INTO athletes 
-                (coach_id, name, ic_number, dob, age, phone, height_cm, weight_kg, gender, sport_type, category, pb_seconds, monthly_fee, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 10.50, 60.00, ?)");
-            $insert->execute([$coach_id, $name, $ic_number, $dob, $age, $phone, $height_cm, $weight_kg, $gender, $sport_type, $category, $notes]);
+                (coach_id, name, ic_number, dob, age, phone, height_cm, weight_kg, gender, sport_type, category, pb_seconds, monthly_fee, notes, photo_uri)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 10.50, 60.00, ?, ?)");
+            $insert->execute([$coach_id, $name, $ic_number, $dob, $age, $phone, $height_cm, $weight_kg, $gender, $sport_type, $category, $notes, $photo_path]);
             $success = true;
         } catch (Exception $e) {
             $error = "Gagal menyimpan pendaftaran: " . $e->getMessage();
@@ -53,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pendaftaran Pelatih Baharu - Psyco Time X Pro</title>
+    <title>Pendaftaran Atlit Baharu - Psyco Time X Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -99,17 +122,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container">
     <div class="header">
         <div class="logo-badge">P<span>X</span>P</div>
-        <h1>BORANG PENDAFTARAN PELATIH</h1>
+        <h1>BORANG PENDAFTARAN ATLIT</h1>
         <div class="coach-tag">Jurulatih Bertanggungjawab: <strong><?= htmlspecialchars($coach_name) ?></strong></div>
     </div>
 
     <?php if ($success): ?>
         <div class="alert-success">
-            <h3 style="font-size: 16px; margin-bottom: 6px;">Pendaftaran Berjaya Disimpan!</h3>
-            <p style="font-size: 12px; color: #FFF;">Maklumat atlet telah dihantar ke sistem jurulatih <strong><?= htmlspecialchars($coach_name) ?></strong>.</p>
-            <p style="font-size: 11px; margin-top: 8px; color: var(--silver);">Sebarang pertanyaan, hubungi Admin Roger: <a href="https://wa.me/60195326399?text=Salam%20Roger,%20saya%20telah%20mendaftar%20pelatih%20baru" style="color:var(--green);font-weight:bold;">+60195326399</a></p>
+            <h3 style="font-size: 16px; margin-bottom: 6px;">Pendaftaran Atlit Berjaya Disimpan!</h3>
+            <p style="font-size: 12px; color: #FFF;">Maklumat dan gambar atlit telah dihantar ke sistem jurulatih <strong><?= htmlspecialchars($coach_name) ?></strong>.</p>
+            <p style="font-size: 11px; margin-top: 8px; color: var(--silver);">Sebarang pertanyaan, hubungi Admin Roger: <a href="https://wa.me/60195326399?text=Salam%20Roger,%20saya%20telah%20mendaftar%20atlit%20baru" style="color:var(--green);font-weight:bold;">+60195326399</a></p>
             <br>
-            <a href="register_runner.php?coach_id=<?= $coach_id ?>" style="display:inline-block;padding:8px 16px;background:var(--surface-variant);color:#FFF;text-decoration:none;border-radius:6px;font-size:11px;font-weight:bold;">+ Daftar Pelatih Lain</a>
+            <a href="register_runner.php?coach_id=<?= $coach_id ?>" style="display:inline-block;padding:8px 16px;background:var(--surface-variant);color:#FFF;text-decoration:none;border-radius:6px;font-size:11px;font-weight:bold;">+ Daftar Atlit Lain</a>
         </div>
     <?php else: ?>
 
@@ -117,9 +140,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
-                <label>Nama Penuh Pelatih *</label>
+                <label>Gambar Atlit (Mandatori *)</label>
+                <input type="file" name="photo" accept="image/*" required style="padding:8px;background:var(--surface-variant);border:1px solid var(--racing-red);">
+                <small style="color:var(--silver);font-size:10px;">Format JPG/PNG. Wajib untuk kad profil atlit & rekod kejohanan.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Nama Penuh Atlit *</label>
                 <input type="text" name="name" required placeholder="cth: Muhammad Danial bin Rosli">
             </div>
 

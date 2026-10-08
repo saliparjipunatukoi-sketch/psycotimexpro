@@ -2,6 +2,10 @@ package com.example.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,13 +20,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.local.entity.AthleteEntity
 import com.example.data.local.entity.TimingRunEntity
 import com.example.ui.components.PsycotimexproLogoBadge
@@ -56,6 +63,15 @@ fun CoachDashboardScreen(
     var showReceiptDialog by remember { mutableStateOf(false) }
     var showAdminDialog by remember { mutableStateOf(false) }
     var selectedRunnerForEdit by remember { mutableStateOf<AthleteEntity?>(null) }
+
+    val logoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.updateClubLogo(uri.toString())
+            Toast.makeText(context, "Logo Kelab berjaya dikemas kini!", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val balapanCount = athletes.count { it.sportType == "Balapan" }
     val padangCount = athletes.count { it.sportType == "Padang" }
@@ -140,7 +156,97 @@ fun CoachDashboardScreen(
             }
         }
 
-        // Prominent Action Bar: "New Member (QR Code Pelatih)" & "Resit Langganan RM30"
+        // Club Logo Card (100x100)
+        item {
+            Surface(
+                color = SurfaceDark,
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Logo Display (100x100 dp)
+                    val clubLogo = currentCoach?.clubLogoUri
+                    if (!clubLogo.isNullOrBlank()) {
+                        AsyncImage(
+                            model = clubLogo,
+                            contentDescription = "Logo Kelab",
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .border(1.5.dp, GoldAccent, RoundedCornerShape(8.dp))
+                                .clickable {
+                                    logoPickerLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                },
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Surface(
+                            color = Color.Black,
+                            shape = RoundedCornerShape(8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent.copy(alpha = 0.5f)),
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clickable {
+                                    logoPickerLauncher.launch(
+                                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                    )
+                                }
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(28.dp))
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("LOGO KELAB", color = GoldAccent, fontSize = 9.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+                                Text("100x100", color = TextMuted, fontSize = 8.sp)
+                            }
+                        }
+                    }
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "LOGO KELAB COACH (100x100)",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Text(
+                            text = "Logo ini akan dipaparkan secara rasmi di resit bayaran langganan dan kepala laporan atlit.",
+                            color = TextSecondary,
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                logoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SurfaceVariantDark),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Icon(Icons.Default.Upload, contentDescription = null, tint = GoldAccent, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (!clubLogo.isNullOrBlank()) "Tukar Logo (100x100)" else "+ Muat Naik Logo (100x100)", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Prominent Action Bar: "New Member (QR Code Atlit)" & "Resit Langganan RM30"
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -218,8 +324,8 @@ fun CoachDashboardScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("NOTIFIKASI: YURAN PELATIH HAMPIR MATANG", color = GoldAccent, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
-                            Text("${runnersWithDueFees.size} pelatih mempunyai tarikh matang yuran bulanan dalam masa terdekat.", color = TextPrimary, fontSize = 10.sp)
+                            Text("NOTIFIKASI: YURAN ATLIT HAMPIR MATANG", color = GoldAccent, fontSize = 11.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace)
+                            Text("${runnersWithDueFees.size} atlit mempunyai tarikh matang yuran bulanan dalam masa terdekat.", color = TextPrimary, fontSize = 10.sp)
                         }
                         TextButton(onClick = { viewModel.selectTab(AppTab.FEES) }) {
                             Text("Semak Yuran", color = GoldAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -236,7 +342,7 @@ fun CoachDashboardScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 StatCard(
-                    title = "Pelatih",
+                    title = "Atlit",
                     value = "$totalAthletes",
                     accentColor = Color.White,
                     icon = Icons.Default.People,
@@ -272,7 +378,7 @@ fun CoachDashboardScreen(
             Spacer(modifier = Modifier.height(4.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 QuickNavTile(
-                    title = "Pelatih",
+                    title = "Atlit",
                     subtitle = "Balapan/Padang",
                     icon = Icons.Default.People,
                     accentColor = RacingRed,
@@ -305,7 +411,7 @@ fun CoachDashboardScreen(
             }
         }
 
-        // Section: Senarai Pelatih Berdaftar (Balapan & Padang)
+        // Section: Senarai Atlit Berdaftar (Balapan & Padang)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -313,14 +419,14 @@ fun CoachDashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "SENARAI PELATIH (${athletes.size})",
+                    text = "SENARAI ATLIT (${athletes.size})",
                     color = Color.White,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
                 TextButton(onClick = { showQrDialog = true }) {
-                    Text("+ Tambah Pelatih", color = RacingRed, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("+ Tambah Atlit", color = RacingRed, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -329,7 +435,7 @@ fun CoachDashboardScreen(
             item {
                 Surface(color = SurfaceDark, shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.padding(24.dp), contentAlignment = Alignment.Center) {
-                        Text("Belum ada pelatih. Tekan butang 'New Member (QR Code)' untuk mula mendaftar pelatih.", color = TextMuted, fontSize = 12.sp)
+                        Text("Belum ada atlit. Tekan butang 'New Member (QR Code)' untuk mula mendaftar atlit.", color = TextMuted, fontSize = 12.sp)
                     }
                 }
             }

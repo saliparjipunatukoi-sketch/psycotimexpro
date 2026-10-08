@@ -1,10 +1,14 @@
 package com.example.ui.dialogs
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -13,10 +17,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.local.entity.AthleteEntity
 import com.example.ui.theme.*
 
@@ -29,6 +37,7 @@ fun EditRunnerDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(athlete.name) }
+    var photoUri by remember { mutableStateOf(athlete.photoUri) }
     var icNumber by remember { mutableStateOf(athlete.icNumber) }
     var dob by remember { mutableStateOf(athlete.dob) }
     var age by remember { mutableStateOf(athlete.age.toString()) }
@@ -45,6 +54,14 @@ fun EditRunnerDialog(
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            photoUri = uri.toString()
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDark,
@@ -54,7 +71,7 @@ fun EditRunnerDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("KEMAS KINI MAKLUMAT PELATIH", color = RacingRed, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text("KEMAS KINI MAKLUMAT ATLIT", color = RacingRed, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
                     Icon(Icons.Default.Close, contentDescription = null, tint = TextMuted)
                 }
@@ -64,14 +81,72 @@ fun EditRunnerDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 420.dp)
+                    .heightIn(max = 440.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Photo preview and change section
+                Surface(
+                    color = Color.Black,
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (photoUri.isNotBlank()) {
+                            AsyncImage(
+                                model = photoUri,
+                                contentDescription = "Gambar Atlit",
+                                modifier = Modifier
+                                    .size(54.dp)
+                                    .clip(CircleShape)
+                                    .border(1.5.dp, RacingRed, CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Surface(
+                                color = RacingRed.copy(alpha = 0.2f),
+                                shape = CircleShape,
+                                modifier = Modifier.size(54.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = RacingRed, modifier = Modifier.size(26.dp))
+                                }
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("GAMBAR PROFIL ATLIT", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                            Text("Tekan untuk tukar gambar terkini atlit", color = TextSecondary, fontSize = 10.sp)
+                        }
+
+                        Button(
+                            onClick = {
+                                photoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = SurfaceVariantDark),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text("Tukar", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nama Penuh Pelatih") },
+                    label = { Text("Nama Penuh Atlit") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = RacingRed, unfocusedBorderColor = BorderDark)
@@ -210,6 +285,7 @@ fun EditRunnerDialog(
                     onClick = {
                         val updated = athlete.copy(
                             name = name.trim(),
+                            photoUri = photoUri,
                             icNumber = icNumber.trim(),
                             dob = dob.trim(),
                             age = age.toIntOrNull() ?: athlete.age,
@@ -239,10 +315,10 @@ fun EditRunnerDialog(
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             containerColor = SurfaceDark,
-            title = { Text("Sahkan Padam Pelatih", color = RacingRed, fontWeight = FontWeight.Bold) },
+            title = { Text("Sahkan Padam Atlit", color = RacingRed, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Adakah anda pasti ingin memadam ${athlete.name}? Pelatih ini akan dikeluarkan daripada senarai latihan dan rekod.",
+                    "Adakah anda pasti ingin memadam ${athlete.name}? Atlit ini akan dikeluarkan daripada senarai latihan dan rekod.",
                     color = TextPrimary,
                     fontSize = 12.sp
                 )
@@ -256,7 +332,7 @@ fun EditRunnerDialog(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = RacingRed)
                 ) {
-                    Text("Ya, Padam Pelatih", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("Ya, Padam Atlit", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {

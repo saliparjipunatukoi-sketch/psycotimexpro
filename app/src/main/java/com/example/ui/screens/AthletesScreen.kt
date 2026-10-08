@@ -2,10 +2,12 @@ package com.example.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -45,6 +48,9 @@ fun AthletesScreen(
 
     val balapanCount = athletes.count { it.sportType == "Balapan" }
     val padangCount = athletes.count { it.sportType == "Padang" }
+
+    var selectedAthleteIds by remember { mutableStateOf(setOf<Long>()) }
+    var isSelectionMode by remember { mutableStateOf(false) }
 
     val filteredAthletes = remember(athletes, searchQuery, selectedSportFilter) {
         athletes.filter { ath ->
@@ -80,7 +86,7 @@ fun AthletesScreen(
                     PsycotimexproLogoBadge(size = 38.dp)
                     Column {
                         Text(
-                            text = "DIREKTORI & PENDAFTARAN PELATIH",
+                            text = "DIREKTORI & PENDAFTARAN ATLIT",
                             color = RacingRed,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -94,15 +100,99 @@ fun AthletesScreen(
                     }
                 }
 
-                Button(
-                    onClick = { showQrDialog = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = RacingRed),
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Bulk Selection Mode Toggle
+                    Button(
+                        onClick = {
+                            isSelectionMode = !isSelectionMode
+                            if (!isSelectionMode) selectedAthleteIds = emptySet()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = if (isSelectionMode) GoldAccent else SurfaceDarkVariant),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isSelectionMode) Icons.Default.ChecklistRtl else Icons.Default.Checklist,
+                            contentDescription = null,
+                            tint = if (isSelectionMode) Color.Black else Color.White,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (isSelectionMode) "Batal Pilihan" else "Pilih Pukal",
+                            color = if (isSelectionMode) Color.Black else Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Button(
+                        onClick = { showQrDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = RacingRed),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("New Member", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
+        // Bulk Selection Bar (When in selection mode)
+        if (isSelectionMode) {
+            item {
+                Surface(
+                    color = SurfaceDarkVariant,
+                    shape = RoundedCornerShape(10.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, GoldAccent),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("New Member", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = selectedAthleteIds.size == filteredAthletes.size && filteredAthletes.isNotEmpty(),
+                                onCheckedChange = { checked ->
+                                    selectedAthleteIds = if (checked) {
+                                        filteredAthletes.map { it.id }.toSet()
+                                    } else {
+                                        emptySet()
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(checkedColor = GoldAccent)
+                            )
+                            Text(
+                                text = "Pilih Semua (${selectedAthleteIds.size}/${filteredAthletes.size})",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val selectedList = athletes.filter { it.id in selectedAthleteIds }
+                                if (selectedList.isNotEmpty()) {
+                                    viewModel.exportAthletesToPdf(context, selectedList)
+                                } else {
+                                    Toast.makeText(context, "Sila tanda sekurang-kurangnya seorang atlit!", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            enabled = selectedAthleteIds.isNotEmpty(),
+                            colors = ButtonDefaults.buttonColors(containerColor = RacingRed),
+                            shape = RoundedCornerShape(6.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Muat Turun PDF (${selectedAthleteIds.size})", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
@@ -169,7 +259,7 @@ fun AthletesScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "SENARAI PELATIH AKTIF (${filteredAthletes.size})",
+                    text = "SENARAI ATLIT AKTIF (${filteredAthletes.size})",
                     color = Color.White,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -193,8 +283,8 @@ fun AthletesScreen(
                 ) {
                     Box(modifier = Modifier.padding(28.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (athletes.isEmpty()) "Belum ada pelatih didaftarkan.\nTekan butang '+ New Member' di atas untuk memaparkan QR code pendaftaran."
-                            else "Tiada pelatih ditemui dalam carian ini.",
+                            text = if (athletes.isEmpty()) "Belum ada atlit didaftarkan.\nTekan butang '+ Daftar Atlit' di atas untuk pendaftaran (Gambar Atlit Wajib)."
+                            else "Tiada atlit ditemui dalam carian ini.",
                             color = TextMuted,
                             fontSize = 12.sp,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -206,6 +296,18 @@ fun AthletesScreen(
             items(filteredAthletes) { athlete ->
                 FullAthleteCard(
                     athlete = athlete,
+                    isSelectionMode = isSelectionMode,
+                    isSelected = athlete.id in selectedAthleteIds,
+                    onToggleSelect = {
+                        selectedAthleteIds = if (athlete.id in selectedAthleteIds) {
+                            selectedAthleteIds - athlete.id
+                        } else {
+                            selectedAthleteIds + athlete.id
+                        }
+                    },
+                    onExportPdf = {
+                        viewModel.exportAthletesToPdf(context, listOf(athlete))
+                    },
                     onEdit = { athleteToEdit = athlete },
                     onDelete = { athleteToDelete = athlete }
                 )
@@ -233,12 +335,12 @@ fun AthletesScreen(
             athlete = athlete,
             onSave = { updated ->
                 viewModel.updateAthlete(updated)
-                Toast.makeText(context, "Maklumat pelatih dikemas kini!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Maklumat atlit dikemas kini!", Toast.LENGTH_SHORT).show()
                 athleteToEdit = null
             },
             onDelete = { toDel ->
                 viewModel.deleteAthlete(toDel)
-                Toast.makeText(context, "Pelatih berjaya dipadam.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Atlit berjaya dipadam.", Toast.LENGTH_SHORT).show()
                 athleteToEdit = null
             },
             onDismiss = { athleteToEdit = null }
@@ -250,10 +352,10 @@ fun AthletesScreen(
         AlertDialog(
             onDismissRequest = { athleteToDelete = null },
             containerColor = SurfaceDark,
-            title = { Text("Padam Pelatih", color = RacingRed, fontWeight = FontWeight.Bold) },
+            title = { Text("Padam Atlit", color = RacingRed, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Adakah anda pasti ingin memadam ${delAth.name} (${delAth.category})? Data pelatih akan dikeluarkan daripada sistem.",
+                    "Adakah anda pasti ingin memadam ${delAth.name} (${delAth.category})? Data atlit akan dikeluarkan daripada sistem.",
                     color = TextPrimary,
                     fontSize = 12.sp
                 )
@@ -262,7 +364,7 @@ fun AthletesScreen(
                 Button(
                     onClick = {
                         viewModel.deleteAthlete(delAth)
-                        Toast.makeText(context, "Pelatih berjaya dipadam.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Atlit berjaya dipadam.", Toast.LENGTH_SHORT).show()
                         athleteToDelete = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = RacingRed)
@@ -282,16 +384,22 @@ fun AthletesScreen(
 @Composable
 fun FullAthleteCard(
     athlete: AthleteEntity,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onToggleSelect: () -> Unit = {},
+    onExportPdf: () -> Unit = {},
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     val isPadang = athlete.sportType == "Padang"
 
     Surface(
-        color = SurfaceDark,
+        color = if (isSelected) SurfaceDarkVariant else SurfaceDark,
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
-        modifier = Modifier.fillMaxWidth().clickable { onEdit() }
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) GoldAccent else BorderDark),
+        modifier = Modifier.fillMaxWidth().clickable {
+            if (isSelectionMode) onToggleSelect() else onEdit()
+        }
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -299,25 +407,65 @@ fun FullAthleteCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = athlete.name,
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    // Sport Badge
-                    Surface(
-                        color = if (isPadang) SilverMetallic.copy(alpha = 0.2f) else RacingRed.copy(alpha = 0.2f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isPadang) SilverMetallic else RacingRed),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (isSelectionMode) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = { onToggleSelect() },
+                            colors = CheckboxDefaults.colors(checkedColor = GoldAccent)
+                        )
+                    }
+
+                    // Atlit Photo Avatar (Mandatori)
+                    if (athlete.photoUri.isNotBlank()) {
+                        coil.compose.AsyncImage(
+                            model = athlete.photoUri,
+                            contentDescription = athlete.name,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .border(1.5.dp, RacingRed, androidx.compose.foundation.shape.CircleShape),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    } else {
+                        Surface(
+                            color = RacingRed.copy(alpha = 0.2f),
+                            shape = androidx.compose.foundation.shape.CircleShape,
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Person, contentDescription = null, tint = RacingRed, modifier = Modifier.size(24.dp))
+                            }
+                        }
+                    }
+
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = athlete.name,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            // Sport Badge
+                            Surface(
+                                color = if (isPadang) SilverMetallic.copy(alpha = 0.2f) else RacingRed.copy(alpha = 0.2f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isPadang) SilverMetallic else RacingRed),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = athlete.sportType,
+                                    color = if (isPadang) SilverMetallic else RacingRed,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                         Text(
-                            text = athlete.sportType,
-                            color = if (isPadang) SilverMetallic else RacingRed,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Black,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            text = "${athlete.category} • ${athlete.gender} (${athlete.age} Thn)",
+                            color = TextSecondary,
+                            fontSize = 11.sp
                         )
                     }
                 }

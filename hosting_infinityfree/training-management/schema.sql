@@ -26,6 +26,11 @@ CREATE TABLE IF NOT EXISTS `coaches` (
   `subscription_status` VARCHAR(30) DEFAULT 'TRIAL_7_DAYS',
   `subscription_expires_at` BIGINT NOT NULL,
   `sub_coach_slots` INT DEFAULT 1,
+  `club_logo_uri` LONGTEXT DEFAULT NULL,
+  `profile_photo_uri` LONGTEXT DEFAULT NULL,
+  `achievements` TEXT DEFAULT NULL, -- Pencapaian Jurulatih (MSSM, Sukma, Kebangsaan)
+  `licenses` TEXT DEFAULT NULL, -- Lesen (Sport Science Level 1, Level 2, World Athletics Level 1)
+  `bio` TEXT DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -62,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `athletes` (
   `previous_distance_or_score` DECIMAL(6,2) DEFAULT 0.00,
   `monthly_fee` DECIMAL(8,2) DEFAULT 60.00,
   `fee_due_date` VARCHAR(20) DEFAULT '',
+  `photo_uri` LONGTEXT DEFAULT NULL,
   `notes` TEXT DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`coach_id`) REFERENCES `coaches`(`id`) ON DELETE CASCADE
@@ -123,6 +129,41 @@ CREATE TABLE IF NOT EXISTS `subscription_receipts` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`coach_id`) REFERENCES `coaches`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8. Jadual Peti Masuk & Laporan Bulanan Jurulatih (Inbox Messages)
+CREATE TABLE IF NOT EXISTS `inbox_messages` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `coach_id` INT NOT NULL,
+  `sender_name` VARCHAR(150) DEFAULT 'Sistem Psyco Time X Pro',
+  `title` VARCHAR(255) NOT NULL,
+  `content` TEXT NOT NULL,
+  `date_string` VARCHAR(30) NOT NULL,
+  `message_type` VARCHAR(50) DEFAULT 'MONTHLY_REPORT', -- 'MONTHLY_REPORT', 'ADMIN_MEMO', 'DOCUMENT_NOTICE'
+  `is_read` TINYINT(1) DEFAULT 0,
+  `attached_document_title` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`coach_id`) REFERENCES `coaches`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 9. Jadual Testimonial Pengguna / Jurulatih
+CREATE TABLE IF NOT EXISTS `testimonials` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `coach_id` INT DEFAULT NULL,
+  `coach_name` VARCHAR(150) NOT NULL,
+  `club_or_role` VARCHAR(150) DEFAULT 'Jurulatih Balapan & Padang',
+  `rating` INT DEFAULT 5,
+  `comment` TEXT NOT NULL,
+  `is_approved` TINYINT(1) DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- MASUKKAN TESTIMONIAL CONTOH AWAL
+INSERT INTO `testimonials` (`coach_name`, `club_or_role`, `rating`, `comment`)
+VALUES 
+  ('Coach Haris Ridzuan', 'Akademi Pecut Elit Selangor', 5, 'Sistem Electronic Timing dengan video penamat dan AI posture analysis sangat membantu atlit kami tingkatkan catatan PB pecut 100m. Laporan bulanan 1hb siap automatik!'),
+  ('Coach Maznah Kassim', 'Kelab Olahraga Gemilang Sabah', 5, 'Sangat mudah urus pendaftaran atlit melalui QR code dan cetak kad profile PDF secara pukal. Berbaloi hanya RM30 sebulan!'),
+  ('Coach Tan Wei Lun', 'Penang Track & Field Club', 5, 'Web portal senang dipantau dari laptop. Sub-coach boleh bantu ambil masa dan kehadiran terus dari telefon.')
+ON DUPLICATE KEY UPDATE `comment` = VALUES(`comment`);
 
 -- MASUKKAN DATA MASTER ADMIN (ROGER) SECARA AUTOMATIK
 -- Username: Saliparjipun.atukoi@gmail.com

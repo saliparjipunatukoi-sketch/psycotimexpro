@@ -2,11 +2,17 @@
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/db_config.php';
 
+// Rakam data masuk untuk debugging sync dari APK
+$raw_input = file_get_contents('php://input');
+if (!empty($raw_input)) {
+    file_put_contents('debug_api.txt', date('Y-m-d H:i:s') . " - " . $raw_input . PHP_EOL, FILE_APPEND);
+}
+
 $action = $_GET['action'] ?? '';
 
 // 1. LOGIN API
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $input = json_decode($raw_input, true);
     $username = trim($input['username'] ?? '');
     $password = trim($input['password'] ?? '');
 
@@ -59,9 +65,9 @@ if ($action === 'get_runners') {
     exit;
 }
 
-// 3. SYNC RUNNERS FROM APP
+// 3. SYNC RUNNERS FROM APP[cite: 15]
 if ($action === 'sync_runners' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $input = json_decode($raw_input, true);
     $coach_id = intval($input['coach_id'] ?? 1);
     $runners = $input['runners'] ?? [];
 
@@ -102,3 +108,4 @@ echo json_encode([
     'version' => '2.0',
     'admin' => ADMIN_NAME . ' (+' . ADMIN_WHATSAPP . ')'
 ]);
+?>

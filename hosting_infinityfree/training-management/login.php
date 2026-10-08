@@ -198,16 +198,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <a href="register_coach.php" class="btn-register-link">Belum ada akaun Jurulatih? <strong>Daftar Percuma 7 Hari</strong></a>
 
     <a href="ranking.php" style="display:block;text-align:center;margin-top:10px;padding:9px;background:rgba(255,215,0,0.1);border:1px solid var(--gold);border-radius:8px;color:var(--gold);text-decoration:none;font-size:12px;font-weight:800;">
-        🏆 Lihat Carta Ranking Pelatih
+        🏆 Lihat Carta Ranking Atlit
     </a>
 
     <a href="download.php" style="display:block;text-align:center;margin-top:8px;padding:9px;background:rgba(0,230,118,0.12);border:1px solid var(--green);border-radius:8px;color:var(--green);text-decoration:none;font-size:12px;font-weight:800;">
         📲 Muat Turun Aplikasi Android (APK)
     </a>
-
-    <div class="quick-admin">
-        Master Admin Roger: <a onclick="fillAdminCredentials()">Isi Pantas Admin Login</a>
-    </div>
 
     <div class="footer-admin">
         Bantuan / Pertanyaan: <a href="https://wa.me/60195326399">WhatsApp Roger (+60195326399)</a>
@@ -225,54 +221,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
             <h3 style="font-family:'JetBrains Mono',monospace;margin-top:6px;">LOG MASUK GOOGLE</h3>
-            <p style="font-size:11px;color:var(--silver);">Pilih akaun atau masukkan Emel Google anda. Log masuk dibenarkan serta-merta tanpa perlu password!</p>
+            <p style="font-size:11px;color:var(--silver);">Masukkan Emel Google anda. Log masuk dibenarkan serta-merta tanpa perlu password!</p>
         </div>
-
-        <div style="font-size:11px;font-weight:bold;color:var(--gold);margin-bottom:8px;">PILIH AKAUN PANTAS:</div>
-
-        <form method="POST" action="google_login.php">
-            <input type="hidden" name="google_email" value="Saliparjipun.atukoi@gmail.com">
-            <input type="hidden" name="google_name" value="Roger (Master Admin)">
-            <input type="hidden" name="google_club" value="Kelab Olahraga Psyco Time X Pro">
-            <button type="submit" class="account-item" style="width:100%;text-align:left;border:none;">
-                <div style="width:28px;height:28px;background:var(--gold);color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">R</div>
-                <div>
-                    <strong style="color:#FFF;">Roger (Master Admin)</strong><br>
-                    <span style="font-size:10px;color:var(--silver);">Saliparjipun.atukoi@gmail.com</span>
-                </div>
-            </button>
-        </form>
-
-        <form method="POST" action="google_login.php">
-            <input type="hidden" name="google_email" value="coach.danial@gmail.com">
-            <input type="hidden" name="google_name" value="Coach Danial">
-            <input type="hidden" name="google_club" value="Akademi Pecut Elit">
-            <button type="submit" class="account-item" style="width:100%;text-align:left;border:none;">
-                <div style="width:28px;height:28px;background:var(--green);color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">D</div>
-                <div>
-                    <strong style="color:#FFF;">Coach Danial (Sprint Specialist)</strong><br>
-                    <span style="font-size:10px;color:var(--silver);">coach.danial@gmail.com</span>
-                </div>
-            </button>
-        </form>
-
-        <div class="divider">atau guna emel Google lain</div>
 
         <form method="POST" action="google_login.php">
             <div class="form-group">
                 <label>Emel Google (Gmail)</label>
-                <input type="email" name="google_email" required placeholder="nama@gmail.com">
+                <input type="email" name="google_email" placeholder="nama.anda@gmail.com" required>
             </div>
             <div class="form-group">
-                <label>Nama Anda (Jika Akaun Baharu)</label>
+                <label>Nama Jurulatih / Nick Name (Jika Pengguna Baharu)</label>
                 <input type="text" name="google_name" placeholder="cth: Coach Sam">
             </div>
             <div class="form-group">
-                <label>Nama Kelab (Jika Akaun Baharu)</label>
+                <label>Nama Kelab Sukan (Jika Pengguna Baharu)</label>
                 <input type="text" name="google_club" placeholder="cth: Kelab Olahraga Sabah">
             </div>
-            <button type="submit" class="btn-login" style="background:#4285F4;">TERUSKAN DENGAN GOOGLE</button>
-            <button type="button" class="btn-login" style="background:transparent;border:1px solid var(--border);color:var(--silver);margin-top:6px;" onclick="closeGoogleModal()">BATAL</button>
+            <button type="submit" class="btn-login" style="background:#4285F4;margin-top:10px;">
+                Masuk dengan Google (Tanpa Password)
+            </button>
+            <button type="button" class="btn-login" style="background:var(--surface-variant);margin-top:8px;border:1px solid var(--border);" onclick="closeGoogleModal()">
+                Batal
+            </button>
         </form>
     </div>
 </div>
@@ -303,12 +273,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             lbl.innerText = "Username Sub-Coach";
             input.placeholder = "cth: asst.haris";
         }
-    }
-
-    function fillAdminCredentials() {
-        setLoginType('coach');
-        document.getElementById('identifier_input').value = "Saliparjipun.atukoi@gmail.com";
-        document.getElementById('password_input').value = "Abc@1234";
     }
 </script>
 

@@ -124,7 +124,7 @@ fun WebPortalScreen(
                                 context.startActivity(intent)
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = RacingRed),
-                            modifier = Modifier.weight(1.3f),
+                            modifier = if (currentCoach?.role == "ADMIN") Modifier.weight(1.3f) else Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Icon(Icons.Default.LaptopMac, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
@@ -132,15 +132,18 @@ fun WebPortalScreen(
                             Text("Buka Web di Laptop", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                         }
 
-                        Button(
-                            onClick = { showSetupGuideDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = SurfaceVariantDark),
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Icon(Icons.Default.Code, contentDescription = null, tint = SilverMetallic, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Panduan FTP/SQL", color = SilverMetallic, fontSize = 11.sp)
+                        // Hanya Master Admin Roger dibenarkan melihat Panduan FTP & Kod SQL
+                        if (currentCoach?.role == "ADMIN") {
+                            Button(
+                                onClick = { showSetupGuideDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = SurfaceVariantDark),
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(Icons.Default.Code, contentDescription = null, tint = SilverMetallic, modifier = Modifier.size(14.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Panduan FTP/SQL", color = SilverMetallic, fontSize = 11.sp)
+                            }
                         }
                     }
                 }
@@ -159,7 +162,7 @@ fun WebPortalScreen(
                     Text("PENYEGERAKAN AWAN (CLOUD SYNC)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Data Tempatan sedia disegerak: $totalAthletes Pelatih, $totalRuns Rekod Larian ET",
+                        text = "Data Tempatan sedia disegerak: $totalAthletes Atlit, $totalRuns Rekod Larian ET",
                         color = TextSecondary,
                         fontSize = 11.sp
                     )
@@ -173,10 +176,12 @@ fun WebPortalScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
-                            Text("Pelayan InfinityFree: www.psycotimexpro.my", color = SilverMetallic, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                            Text("Path: /htdocs/training-management/api.php", color = TextSecondary, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                            Text("Database MySQL: if0_41886177_registry_psyco", color = TextMuted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
-                            Text("Status API: $apiEndpointStatus", color = SprintGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("Portal Web Rasmi: www.psycotimexpro.my/training-management", color = SilverMetallic, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            if (currentCoach?.role == "ADMIN") {
+                                Text("Path: /htdocs/training-management/api.php", color = TextSecondary, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                                Text("Database MySQL: if0_41886177_registry_psyco", color = TextMuted, fontSize = 10.sp, fontFamily = FontFamily.Monospace)
+                            }
+                            Text("Status Sambungan: $apiEndpointStatus", color = SprintGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -265,9 +270,9 @@ fun WebPortalScreen(
                 }
 
                 WebLinkRow(
-                    title = "Borang Pendaftaran Pelatih (QR Target)",
+                    title = "Borang Pendaftaran Atlit (QR Target)",
                     url = qrRegisterUrl,
-                    desc = "Borang yang dibuka bila ibu bapa/atlet imbas QR Code",
+                    desc = "Borang yang dibuka bila ibu bapa/atlit imbas QR Code",
                     icon = Icons.Default.QrCodeScanner
                 ) {
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(qrRegisterUrl))

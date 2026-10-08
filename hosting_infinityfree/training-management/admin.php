@@ -207,7 +207,7 @@ $total_receipts = $pdo->query("SELECT COUNT(*) FROM subscription_receipts")->fet
         </div>
         <div class="stat-card">
             <div class="num"><?= $total_athletes ?></div>
-            <div class="label">Jumlah Pelatih Berdaftar</div>
+            <div class="label">Jumlah Atlit Berdaftar</div>
         </div>
         <div class="stat-card">
             <div class="num" style="color:var(--green);"><?= $total_receipts ?></div>

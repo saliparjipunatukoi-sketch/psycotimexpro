@@ -22,6 +22,7 @@ data class AthleteEntity(
     val previousPbSeconds: Double = 10.75, // PB Lama untuk banding peningkatan
     val distanceOrScore: Double = 0.0, // Catatan Acara Padang terkini (meter)
     val previousDistanceOrScore: Double = 0.0, // Catatan Padang lama (meter)
+    val photoUri: String = "", // Gambar mandatori atlit untuk rekod & kejohanan
     val monthlyFee: Double = 50.0,
     val feeDueDate: String = "", // e.g. "2026-10-15"
     val notes: String = "",
@@ -34,12 +35,16 @@ data class TimingRunEntity(
     val id: Long = 0,
     val sessionId: String,
     val runNumber: Int,
+    val raceTitle: String = "Race 1",
     val formattedTime: String,
     val durationMillis: Long,
     val dateString: String,
     val athletesJson: String = "[]",
     val camType: String = "CAM_1_START",
     val snapshotUri: String? = null,
+    val videoUri: String? = null,
+    val torsoDetected: Boolean = false,
+    val finishPhotoUri: String? = null,
     val isSynced: Boolean = false
 )
 
@@ -111,6 +116,12 @@ data class CoachAccountEntity(
     val phone: String = "",
     val clubName: String = "", // Nama Kelab / Akademi Sukan
     val clubAddress: String = "", // Alamat Kelab / Lokasi Latihan
+    val clubLogoUri: String = "", // Logo Kelab Rasmi (100x100)
+    val profilePhotoUri: String = "", // Gambar Profil Coach
+    val achievements: String = "", // Pencapaian Coach cth: Jurulatih Pecut MSSM Negeri, Kejohanan Terbuka, Sukma
+    val licenses: String = "", // Lesen cth: Sport Science Level 1, Sport Science Level 2, World Athletics Level 1
+    val bio: String = "", // Maklumat & Latar Belakang Kejurulatihan
+    val hasUpdatedProfileDetails: Boolean = false, // Menandakan coach telah kemaskini pencapaian & lesen
     val trainingSpecialty: String = "Balapan & Padang", // Latihan yang diajar
     val passwordHash: String = "",
     val isApprovedByAdmin: Boolean = true, // Permulaan: Terus aktif & boleh guna 7 hari percuma serta merta
@@ -125,6 +136,22 @@ data class CoachAccountEntity(
     val subCoachSlots: Int = 1, // 1 free sub-coach included
     val parentCoachId: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "inbox_messages")
+data class InboxMessageEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val coachId: Long,
+    val senderName: String = "Sistem Psyco Time X Pro",
+    val title: String,
+    val content: String,
+    val dateString: String,
+    val messageType: String = "MONTHLY_REPORT", // MONTHLY_REPORT, ADMIN_MEMO, DOCUMENT_NOTICE, SYSTEM_REMINDER
+    val isRead: Boolean = false,
+    val attachedDocumentTitle: String? = null,
+    val attachedDataJson: String? = null,
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "sub_coaches")

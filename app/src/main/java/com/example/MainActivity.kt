@@ -37,6 +37,11 @@ class MainActivity : ComponentActivity() {
                 val currentCoach by viewModel.currentCoach.collectAsState()
                 if (currentCoach == null) {
                     LoginScreen(viewModel = viewModel)
+                } else if (viewModel.isCoachSubscriptionExpired(currentCoach)) {
+                    SubscriptionExpiredLockScreen(
+                        coach = currentCoach!!,
+                        onLogout = { viewModel.logout() }
+                    )
                 } else {
                     MainAppScreen(viewModel = viewModel)
                 }
@@ -85,6 +90,20 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         }
                     },
                     actions = {
+                        val unreadCount by viewModel.unreadInboxCount.collectAsState()
+                        IconButton(onClick = { viewModel.selectTab(AppTab.COACH_PROFILE) }) {
+                            BadgedBox(
+                                badge = {
+                                    if (unreadCount > 0) {
+                                        Badge(containerColor = RacingRed) {
+                                            Text("$unreadCount", color = Color.White, fontSize = 8.sp)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Default.AccountCircle, contentDescription = "Profil Coach", tint = if (currentTab == AppTab.COACH_PROFILE) RacingRed else Color.White)
+                            }
+                        }
                         IconButton(onClick = { viewModel.logout() }) {
                             Icon(Icons.Default.Logout, contentDescription = "Log Keluar", tint = TextMuted)
                         }
@@ -117,6 +136,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                 AppTab.AI_ANALYSIS -> AiRunnerAnalysisScreen(viewModel = viewModel)
                 AppTab.AI_ROUTINE -> AiRoutineScreen(viewModel = viewModel)
                 AppTab.WEB_PORTAL -> WebPortalScreen(viewModel = viewModel)
+                AppTab.COACH_PROFILE -> CoachProfileScreen(viewModel = viewModel)
             }
         }
     }
@@ -135,11 +155,11 @@ fun ScrollableNavigationBar(
         val navItems = listOf(
             Triple(AppTab.DASHBOARD, Icons.Default.Dashboard, "Papan Pemuka"),
             Triple(AppTab.TIMING_CAM, Icons.Default.Videocam, "Kamera ET"),
-            Triple(AppTab.RANKING, Icons.Default.EmojiEvents, "Ranking"),
-            Triple(AppTab.ATHLETES, Icons.Default.People, "Pelatih"),
+            Triple(AppTab.RANKING, Icons.Default.EmojiEvents, "Ranking Atlit"),
+            Triple(AppTab.ATHLETES, Icons.Default.People, "Atlit"),
             Triple(AppTab.SUB_COACHES, Icons.Default.GroupAdd, "Sub-Coach"),
             Triple(AppTab.SUBSCRIPTION, Icons.Default.CardMembership, "Langganan"),
-            Triple(AppTab.FEES, Icons.Default.Payment, "Yuran"),
+            Triple(AppTab.FEES, Icons.Default.Payment, "Yuran Atlit"),
             Triple(AppTab.WEB_PORTAL, Icons.Default.Language, "Portal Web")
         )
 

@@ -12,12 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.local.entity.CoachAccountEntity
 import com.example.ui.components.PsycotimexproLogoBadge
 import com.example.ui.theme.*
@@ -66,6 +69,25 @@ fun SubscriptionReceiptDialog(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Club Logo (100x100) on Receipt Header
+                    val clubLogo = coach?.clubLogoUri
+                    if (!clubLogo.isNullOrBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            AsyncImage(
+                                model = clubLogo,
+                                contentDescription = "Logo Kelab",
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(1.dp, GoldAccent, RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("No. Resit:", color = TextSecondary, fontSize = 11.sp)
                         Text(receiptNo, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)

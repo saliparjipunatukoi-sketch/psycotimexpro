@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -81,14 +82,14 @@ fun RankingScreen(
                     PsycotimexproLogoBadge(size = 46.dp)
                     Column {
                         Text(
-                            text = "CARTA RANKING PELATIH",
+                            text = "CARTA RANKING ATLIT",
                             color = RacingRed,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Black,
                             fontFamily = FontFamily.Monospace
                         )
                         Text(
-                            text = "Prestasi PB Terkini vs PB Lama (${filteredAthletes.size} Atlet)",
+                            text = "Prestasi PB Terkini vs PB Lama (${filteredAthletes.size} Atlit)",
                             color = TextSecondary,
                             fontSize = 11.sp
                         )
@@ -337,6 +338,18 @@ fun RankingItemCard(
                             fontFamily = FontFamily.Monospace,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    if (athlete.photoUri.isNotBlank()) {
+                        coil.compose.AsyncImage(
+                            model = athlete.photoUri,
+                            contentDescription = athlete.name,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, rankBadgeColor, CircleShape),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
                         )
                     }
 

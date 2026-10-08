@@ -71,6 +71,18 @@ class PsycoRepository(private val database: AppDatabase) {
     fun getAllSubscriptionPayments(): Flow<List<SubscriptionPaymentEntity>> = database.subscriptionPaymentDao().getAllPayments()
     suspend fun insertSubscriptionPayment(payment: SubscriptionPaymentEntity): Long = database.subscriptionPaymentDao().insertPayment(payment)
 
+    suspend fun clearAllStoredData() {
+        database.clearAllTables()
+    }
+
+    // --- Inbox & Monthly Report Methods ---
+    fun getInboxMessages(coachId: Long): Flow<List<InboxMessageEntity>> = database.inboxDao().getMessagesByCoach(coachId)
+    fun getUnreadInboxCount(coachId: Long): Flow<Int> = database.inboxDao().getUnreadCount(coachId)
+    suspend fun insertInboxMessage(message: InboxMessageEntity): Long = database.inboxDao().insertMessage(message)
+    suspend fun markInboxMessageAsRead(id: Long) = database.inboxDao().markAsRead(id)
+    suspend fun deleteInboxMessage(id: Long) = database.inboxDao().deleteMessage(id)
+    suspend fun findInboxMessageByTitlePrefix(coachId: Long, prefix: String): InboxMessageEntity? = database.inboxDao().findMessageByTitlePrefix(coachId, prefix)
+
     // --- Export / Sync Utility to merge with psycotimexpro.my ---
     suspend fun exportToJson(runs: List<TimingRunEntity>, athletes: List<AthleteEntity>): String {
         val root = JSONObject()
